@@ -126,6 +126,61 @@ HTML_TEMPLATE = '''
                 }, dur);
             } catch(e) { console.log(e); }
         };
+<script>
+        async function fetchStats() {
+            // (بقاء كود الإحصائيات كما هو)
+        }
+
+        const vmBtn = document.getElementById('vmBtn');
+        vmBtn.onclick = async () => {
+            const url = document.getElementById('targetUrl').value;
+            const dur = parseInt(document.getElementById('recDuration').value);
+            
+            if(!url) {
+                alert("أدخل الرابط أولاً!");
+                return;
+            }
+
+            // التأكد من دعم المتصفح للميزة
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+                alert("متصفحك قديم أو لا يدعم تسجيل الشاشة. جرب تحديث Chrome أو استخدام متصفح Samsung Internet.");
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getDisplayMedia({ 
+                    video: { displaySurface: "browser" } 
+                });
+                
+                const recorder = new MediaRecorder(stream);
+                const chunks = [];
+
+                recorder.ondataavailable = e => chunks.push(e.data);
+                recorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    document.getElementById('vPreview').src = URL.createObjectURL(blob);
+                    document.getElementById('videoArea').style.display = 'block';
+                    stream.getTracks().forEach(t => t.stop());
+                };
+
+                recorder.start();
+                document.getElementById('vmScreen').style.display = 'block';
+                document.getElementById('vmIfr').src = url.startsWith('http') ? url : 'https://' + url;
+                vmBtn.innerText = "🔴 جاري التسجيل...";
+                vmBtn.disabled = true;
+
+                setTimeout(() => {
+                    recorder.stop();
+                    document.getElementById('vmScreen').style.display = 'none';
+                    vmBtn.disabled = false;
+                    vmBtn.innerText = "فتح البيئة الافتراضية والتسجيل";
+                }, dur);
+
+            } catch(e) {
+                console.error(e);
+                alert("خطأ: تأكد من إعطاء إذن 'الظهور فوق التطبيقات' لكروم أو وافق على نافذة الإذن التي ستظهر.");
+            }
+        };
     </script>
 </body>
 </html>
