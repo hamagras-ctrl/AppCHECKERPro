@@ -38,8 +38,8 @@ HTML_TEMPLATE = '''
         </div>
     </div>
 
-    <script>
-        function getStats() {
+<script> 
+    function getStats() {
             const url = document.getElementById('target').value;
             const res = document.getElementById('resultBox');
             if(!url) return alert("أدخل رابطاً أولاً!");
@@ -76,6 +76,7 @@ HTML_TEMPLATE = '''
             }
         }
     </script>
+        
         
 </body>
 </html>
