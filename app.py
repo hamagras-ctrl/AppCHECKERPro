@@ -12,101 +12,86 @@ HTML_TEMPLATE = '''
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App CHECKER Pro | VM Edition 🛡️</title>
+    <title>App CHECKER Pro | Recorder 🎥</title>
     <style>
-        body { background: #02050a; color: #00d4ff; font-family: 'Courier New', monospace; margin: 0; padding: 20px; text-align: center; }
-        .container { max-width: 550px; margin: auto; background: rgba(0, 20, 40, 0.9); padding: 25px; border-radius: 15px; border: 2px solid #00d4ff; box-shadow: 0 0 20px #00d4ff; }
-        .vm-screen { width: 100%; height: 300px; background: #000; border: 5px solid #333; border-radius: 10px; margin-top: 20px; position: relative; overflow: hidden; display: none; }
-        .vm-header { background: #333; color: #fff; padding: 5px; font-size: 0.7em; text-align: left; }
+        body { background: #02050a; color: #00d4ff; font-family: sans-serif; padding: 20px; text-align: center; }
+        .container { max-width: 500px; margin: auto; background: rgba(0, 20, 40, 0.9); padding: 20px; border-radius: 15px; border: 2px solid #00d4ff; }
+        .vm-screen { width: 100%; height: 300px; background: #000; border: 3px solid #333; margin-top: 15px; display: none; }
         iframe { width: 100%; height: 100%; border: none; background: #fff; }
-        input, select { width: 80%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #00d4ff; color: #00ff88; border-radius: 8px; }
-        .status-bar { font-size: 0.8em; color: #ffcc00; margin: 10px 0; }
-        .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
-        button { padding: 12px 25px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-run { background: #00ff88; color: #000; }
-        .btn-rec { background: #ff4444; color: #fff; }
+        input { width: 80%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #00d4ff; color: #fff; }
+        .btn-rec { background: #ff4444; color: white; padding: 12px; width: 45%; border-radius: 8px; border:none; font-weight:bold; }
+        .btn-run { background: #00ff88; color: black; padding: 12px; width: 45%; border-radius: 8px; border:none; font-weight:bold; display:none; }
+        #status { font-size: 0.8em; color: #ffcc00; margin: 10px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>System Virtualization Mode</h2>
-        <p class="status-bar" id="sysStatus">الوضع الحالي: جاهز للفحص المعزول</p>
+        <h2>App CHECKER Pro</h2>
+        <p id="status">الخطوة 1: اضغط على زر التسجيل للأذن</p>
         
-        <input type="text" id="targetUrl" placeholder="أدخل الرابط المراد فتحه في VM...">
+        <input type="text" id="targetUrl" placeholder="ضع الرابط هنا...">
         
-        <div>
-            <label>مدة التسجيل (ثانية): </label>
-            <input type="number" id="recTime" value="10" style="width: 50px;">
-        </div>
-
-        <div class="btn-group">
-            <button class="btn-run" onclick="launchVM()">تشغيل البيئة الافتراضية 🚀</button>
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button id="authBtn" class="btn-rec" onclick="getPermission()">1. إذن التسجيل 🎥</button>
+            <button id="runBtn" class="btn-run" onclick="startVM()">2. تشغيل الـ VM 🚀</button>
         </div>
 
         <div class="vm-screen" id="vmContainer">
-            <div class="vm-header">Virtual_OS_v1.0 - Running...</div>
             <iframe id="vmIframe"></iframe>
         </div>
-
-        <div id="recordingResult" style="margin-top:20px; display:none;">
-            <p>✅ تم انتهاء التسجيل المعزول</p>
-            <video id="recordedVideo" width="100%" controls></video>
+        
+        <div id="videoContainer" style="margin-top:20px; display:none;">
+            <video id="finalVideo" width="100%" controls></video>
+            <a id="dl" style="color:#00ff88; display:block; margin-top:10px;">⬇️ حفظ التسجيل</a>
         </div>
     </div>
 
     <script>
-        let mediaRecorder;
-        let recordedChunks = [];
+        let recorder;
+        let stream;
+        let chunks = [];
 
-        async function launchVM() {
+        async function getPermission() {
+            try {
+                // محاولة طلب الإذن بشكل منفصل وبسيط جداً ليتناسب مع J7
+                stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                document.getElementById('authBtn').style.display = 'none';
+                document.getElementById('runBtn').style.display = 'inline-block';
+                document.getElementById('status').innerHTML = "✅ تم أخذ الإذن! الآن اضغط تشغيل الـ VM.";
+            } catch (e) {
+                alert("لم يتم إعطاء الإذن. تأكد من تحديث صفحة الموقع.");
+            }
+        }
+
+        async function startVM() {
             const url = document.getElementById('targetUrl').value;
-            const duration = document.getElementById('recTime').value * 1000;
-            const iframe = document.getElementById('vmIframe');
-            const vmContainer = document.getElementById('vmContainer');
-            
             if(!url) return alert("أدخل الرابط!");
 
-            // طلب إذن التسجيل أولاً
-            try {
-                const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-                mediaRecorder = new MediaRecorder(stream);
-                recordedChunks = [];
+            recorder = new MediaRecorder(stream);
+            chunks = [];
+            recorder.ondataavailable = e => chunks.push(e.data);
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, {type: 'video/webm'});
+                const vUrl = URL.createObjectURL(blob);
+                document.getElementById('finalVideo').src = vUrl;
+                document.getElementById('dl').href = vUrl;
+                document.getElementById('dl').download = "record.webm";
+                document.getElementById('videoContainer').style.display = 'block';
+            };
 
-                mediaRecorder.ondataavailable = (e) => recordedChunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
-                    const videoURL = URL.createObjectURL(blob);
-                    document.getElementById('recordedVideo').src = videoURL;
-                    document.getElementById('recordingResult').style.display = 'block';
-                    stream.getTracks().forEach(t => t.stop());
-                };
+            recorder.start();
+            document.getElementById('vmContainer').style.display = 'block';
+            document.getElementById('vmIframe').src = url.startsWith('http') ? url : 'https://' + url;
+            document.getElementById('status').innerHTML = "🔴 جاري التسجيل داخل الـ VM... (سيتوقف بعد 10 ثوانٍ)";
 
-                // بدء التسجيل وتشغيل الـ VM
-                mediaRecorder.start();
-                vmContainer.style.display = 'block';
-                iframe.src = url.startsWith('http') ? url : 'https://' + url;
-                document.getElementById('sysStatus').innerHTML = "🔴 جاري التسجيل داخل البيئة المعزولة...";
-
-                setTimeout(() => {
-                    if(mediaRecorder.state === "recording") {
-                        mediaRecorder.stop();
-                        document.getElementById('sysStatus').innerHTML = "🟢 تم الانتهاء وحفظ الفيديو.";
-                        vmContainer.style.display = 'none';
-                    }
-                }, duration);
-
-            } catch (err) {
-                alert("يجب السماح بالوصول للشاشة لتشغيل الـ VM.");
-            }
+            setTimeout(() => {
+                recorder.stop();
+                stream.getTracks().forEach(t => t.stop());
+                document.getElementById('vmContainer').style.display = 'none';
+                document.getElementById('status').innerHTML = "✅ انتهى التسجيل. انظر للأسفل.";
+            }, 10000);
         }
     </script>
 </body>
 </html>
 '''
-
-@app.route('/')
-def index():
-    return HTML_TEMPLATE
-
-if __name__ == '__main__':
-    app.run()
