@@ -39,24 +39,44 @@ HTML_TEMPLATE = '''
     </div>
 
     <script>
-        function runVM() {
+        function getStats() {
             const url = document.getElementById('target').value;
-            if(!url) return alert("أدخل رابطاً!");
+            const res = document.getElementById('resultBox');
+            if(!url) return alert("أدخل رابطاً أولاً!");
             
-            let cleanUrl = url.trim();
-            if(!cleanUrl.startsWith('http')) cleanUrl = 'https://' + cleanUrl;
+            res.innerHTML = "جاري التحليل الرقمي... ⏳";
+            fetch('/api/check', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({url: url.trim()})
+            })
+            .then(r => r.json())
+            .then(data => {
+                res.innerHTML = `⚠️ خبيث: <span style="color:#ff4b2b">${data.malicious}</span> | ✅ سليم: <span style="color:#00ff88">${data.harmless}</span>`;
+            })
+            .catch(() => { res.innerHTML = "خطأ في الاتصال."; });
+        }
 
-            // إظهار النافذة وتحميل الرابط
-            const win = document.getElementById('vmWindow');
-            const ifr = document.getElementById('vmIfr');
+        function openVM() {
+            const urlInput = document.getElementById('target').value.trim();
+            if(!urlInput) return alert("أدخل الرابط أولاً!");
+
+            // تنظيف الرابط من أي مسافات أو رموز غريبة
+            let finalUrl = urlInput.replace(/\s+/g, ''); 
+            if(!finalUrl.startsWith('http')) finalUrl = 'https://' + finalUrl;
+
+            // فتح الموقع في نافذة جديدة (Sandbox) لتجاوز حظر الـ Iframe
+            // هذه الطريقة تجعل جوجل وغيره يفتحون بدون مشاكل
+            const newWindow = window.open(finalUrl, '_blank', 'noopener,noreferrer');
             
-            win.style.display = 'block';
-            ifr.src = cleanUrl;
-            
-            // تمرير الصفحة للأسفل ليرى المستخدم الـ VM
-            window.scrollTo(0, document.body.scrollHeight);
+            if(newWindow) {
+                document.getElementById('resultBox').innerHTML = "🚀 تم فتح البيئة المعزولة في نافذة جديدة.";
+            } else {
+                alert("يرجى السماح بالنوافذ المنبثقة (Pop-ups) في متصفحك.");
+            }
         }
     </script>
+        
 </body>
 </html>
 '''
