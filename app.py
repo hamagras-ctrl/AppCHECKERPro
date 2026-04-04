@@ -5,6 +5,7 @@ import os
 
 app = Flask(__name__)
 
+# مفتاح API الخاص بك لخدمة الفحص
 VT_API_KEY = "46ae138611eadc6d24586260cd4d82eb7d2f9a99e320a7faaaf24264e4605551"
 
 HTML_TEMPLATE = '''
@@ -13,83 +14,110 @@ HTML_TEMPLATE = '''
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App CHECKER Pro | Multi-Task</title>
+    <title>App Checker PRO</title>
     <style>
-        :root { --neon: #00d4ff; --bg: #050a10; --green: #00ff88; }
-        body { background: var(--bg); color: #fff; font-family: sans-serif; text-align: center; padding: 15px; margin: 0; }
-        .card { max-width: 450px; margin: auto; background: #0a1929; border: 2px solid var(--neon); border-radius: 20px; padding: 20px; box-shadow: 0 0 20px rgba(0, 212, 255, 0.3); }
-        h1 { color: var(--neon); font-size: 1.6em; text-shadow: 0 0 10px var(--neon); }
-        input { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #1e293b; background: #000; color: #fff; box-sizing: border-box; text-align: center; font-size: 1.1em; }
+        :root { --primary-blue: #1a73e8; --dark-navy: #0f172a; --card-bg: #1e293b; --text-gray: #94a3b8; }
+        body { background-color: var(--dark-navy); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
         
-        .section { background: rgba(0,0,0,0.4); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #1a2a3a; }
-        .section-title { font-size: 0.8em; color: var(--neon); display: block; margin-bottom: 10px; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; }
+        /* الهيدر العلوي كما في تصميمك */
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #161e2d; border-bottom: 1px solid #2d3748; }
+        .logo-text { font-weight: bold; font-size: 1.2em; display: flex; align-items: center; gap: 10px; }
+        .nav-pills { display: flex; gap: 10px; background: #0b1120; padding: 5px; border-radius: 12px; }
+        .pill { padding: 8px 18px; border-radius: 10px; border: none; cursor: pointer; color: white; font-size: 0.9em; transition: 0.3s; }
+        .pill-active { background: var(--primary-blue); box-shadow: 0 4px 10px rgba(26, 115, 232, 0.3); }
+        .pill-ghost { background: transparent; color: var(--text-gray); }
+
+        /* منطقة المحتوى الرئيسي */
+        .main { max-width: 500px; margin: 40px auto; padding: 0 20px; text-align: center; }
+        .hero-icon { width: 90px; height: 90px; background: #1e293b; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px; border: 2px solid #334155; }
+        h1 { font-size: 2.4em; margin: 0 0 15px; font-weight: 800; letter-spacing: -1px; }
+        .desc { color: var(--text-gray); font-size: 1em; line-height: 1.6; margin-bottom: 35px; }
+
+        /* شريط الإدخال المدمج */
+        .search-bar { background: #334155; border-radius: 18px; display: flex; align-items: center; padding: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .search-bar input { flex: 1; background: transparent; border: none; padding: 14px; color: white; text-align: right; outline: none; font-size: 1em; }
+        .search-bar button { background: var(--primary-blue); color: white; border: none; padding: 12px 28px; border-radius: 14px; font-weight: bold; cursor: pointer; }
+
+        /* الأقسام الوظيفية */
+        .feature-card { background: var(--card-bg); border-radius: 20px; padding: 22px; margin-top: 25px; border: 1px solid #334155; text-align: right; transition: 0.3s; }
+        .card-tag { color: var(--primary-blue); font-size: 0.8em; font-weight: 700; display: block; margin-bottom: 12px; }
+        .action-link { display: block; width: 100%; padding: 14px; border-radius: 12px; text-decoration: none; text-align: center; font-weight: 700; margin-top: 15px; }
+        .btn-green { background: #10b981; color: white; }
+        .btn-red-outline { border: 1.5px dashed #ef4444; color: #ef4444; background: #450a0a11; }
         
-        .btn { display: block; width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 1em; box-sizing: border-box; transition: 0.3s; }
-        .btn-stats { background: var(--neon); color: #000; }
-        .btn-vm { background: var(--green); color: #000; }
-        .btn-rec { background: #ff4b2b; color: #fff; }
-        
-        #res { margin-top: 10px; font-weight: bold; color: var(--neon); }
-        .hint { font-size: 0.75em; color: #666; margin-top: 8px; line-height: 1.4; }
+        #scan-result { margin-top: 15px; font-weight: 600; color: #38bdf8; min-height: 20px; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>🛡️ App CHECKER Pro</h1>
-        <input type="text" id="target" placeholder="أدخل الرابط المراد فصصه...">
 
-        <div class="section">
-            <span class="section-title">📊 تحليل البيانات (JSON)</span>
-            <button class="btn btn-stats" onclick="getStats()">بدء الفحص الرقمي</button>
-            <div id="res">في انتظار الأوامر...</div>
+    <div class="header">
+        <div class="nav-pills">
+            <button class="pill pill-ghost">الإحصائيات</button>
+            <button class="pill pill-active">الرئيسية</button>
+        </div>
+        <div class="logo-text">
+            <span>App Checker PRO</span>
+            <img src="https://img.icons8.com/color/48/checked-shield.png" width="28">
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="hero-icon">
+            <img src="https://img.icons8.com/fluency/96/shield.png" width="55">
+        </div>
+        
+        <h1>فحص أمان الروابط</h1>
+        <p class="desc">تأكد من سلامة أي رابط قبل النقر عليه. نقوم بفحص الروابط ضد قواعد بيانات البرمجيات الخبيثة والتصيد الاحتيالي.</p>
+
+        <div class="search-bar">
+            <button onclick="startAnalysis()">ابدأ الفحص</button>
+            <input type="text" id="urlInput" placeholder="أدخل الرابط هنا...">
+        </div>
+        <div id="scan-result">بانتظار إدخال الرابط...</div>
+
+        <div class="feature-card">
+            <span class="card-tag">● البيئة المعزولة (VM)</span>
+            <p style="font-size: 0.9em; color: var(--text-gray); margin: 0;">تصفح الرابط داخل حاوية آمنة لمنع وصول التهديدات لجهازك.</p>
+            <a id="vmTrigger" href="#" target="_blank" class="action-link btn-green" onclick="launchVM()">فتح المعاينة الآمنة 🚀</a>
         </div>
 
-        <div class="section">
-            <span class="section-title">🖥️ البيئة المعزولة (VM)</span>
-            <a id="vmLink" href="#" target="_blank" class="btn btn-vm" onclick="prepareVM()">فتح في نافذة آمنة 🚀</a>
-            <p class="hint">سيتم فتح الموقع في نافذة جديدة لتجاوز حظر الحماية.</p>
-        </div>
-
-        <div class="section">
-            <span class="section-title">🎥 توثيق الفيديو</span>
-            <div style="background: #000; padding: 10px; border-radius: 8px; border: 1px dashed #ff4b2b;">
-                <p style="color: #ff4b2b; font-size: 0.9em; margin: 0;">🔴 ميزة لـ J7:</p>
-                <p style="font-size: 0.8em; color: #ccc;">اضغط "فتح" أعلاه، ثم ابدأ "مسجل الشاشة" يدوياً من هاتفك لتصوير الفحص.</p>
+        <div class="feature-card">
+            <span class="card-tag">● توثيق الفحص بالفيديو</span>
+            <div class="action-link btn-red-outline">
+                🔴 قم بتفعيل "مسجل الشاشة" يدوياً للتوثيق
             </div>
+            <p style="font-size: 0.8em; color: #64748b; margin-top: 12px;">نظراً لإصدار أندرويد على J7، يرجى تشغيل مسجل الشاشة من الإعدادات السريعة قبل المعاينة.</p>
         </div>
-
-        <p style="font-size: 0.6em; color: #334756;">نظام الفحص المتعدد v3.0</p>
     </div>
 
     <script>
-        function getStats() {
-            const url = document.getElementById('target').value.trim();
-            const res = document.getElementById('res');
-            if(!url) return alert("أدخل رابطاً!");
+        // دالة الفحص الرقمي
+        async function startAnalysis() {
+            const url = document.getElementById('urlInput').value.trim();
+            const log = document.getElementById('scan-result');
+            if(!url) return;
             
-            res.innerHTML = "جاري طلب البيانات... ⏳";
-            fetch('/api/check', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({url: url})
-            })
-            .then(r => r.json())
-            .then(data => {
-                res.innerHTML = `⚠️ خبيث: <span style="color:red">${data.malicious}</span> | ✅ سليم: <span style="color:var(--green)">${data.harmless}</span>`;
-            })
-            .catch(() => { res.innerHTML = "خطأ في الاتصال بالسيرفر."; });
+            log.innerHTML = "جاري الاتصال بقاعدة البيانات... ⏳";
+            try {
+                const response = await fetch('/api/check', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url: url})
+                });
+                const data = await response.json();
+                log.innerHTML = `⚠️ تهديدات: ${data.malicious} | ✅ آمن: ${data.harmless}`;
+            } catch(e) { log.innerHTML = "فشل الاتصال بالخادم."; }
         }
 
-        function prepareVM() {
-            const urlInput = document.getElementById('target').value.trim();
-            const link = document.getElementById('vmLink');
-            if(!urlInput) {
-                alert("أدخل الرابط أولاً!");
-                return false;
-            }
-            let finalUrl = urlInput.replace(/\s+/g, ''); 
-            if(!finalUrl.startsWith('http')) finalUrl = 'https://' + finalUrl;
-            link.href = finalUrl;
+        // دالة إعداد رابط المعاينة
+        function launchVM() {
+            const input = document.getElementById('urlInput').value.trim();
+            const link = document.getElementById('vmTrigger');
+            if(!input) return alert("الرجاء إدخال رابط أولاً");
+            
+            let target = input.replace(/\s+/g, ''); 
+            if(!target.startsWith('http')) target = 'https://' + target;
+            link.href = target;
         }
     </script>
 </body>
@@ -102,11 +130,11 @@ def home(): return HTML_TEMPLATE
 @app.route('/api/check', methods=['POST'])
 def check():
     try:
-        target = request.json.get('url', '')
-        url_id = base64.urlsafe_b64encode(target.encode()).decode().strip("=")
-        r = requests.get(f"https://www.virustotal.com/api/v3/urls/{url_id}", headers={"x-apikey": VT_API_KEY})
-        s = r.json()['data']['attributes']['last_analysis_stats']
-        return jsonify({"malicious": s['malicious'], "harmless": s['harmless']})
+        url = request.json.get('url', '')
+        url_id = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
+        response = requests.get(f"https://www.virustotal.com/api/v3/urls/{url_id}", headers={"x-apikey": VT_API_KEY})
+        stats = response.json()['data']['attributes']['last_analysis_stats']
+        return jsonify({"malicious": stats['malicious'], "harmless": stats['harmless']})
     except: return jsonify({"malicious": "!", "harmless": "!"})
 
 if __name__ == "__main__":
