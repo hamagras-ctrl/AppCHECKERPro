@@ -13,91 +13,61 @@ HTML_TEMPLATE = '''
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App Checker PRO</title>
+    <title>App CHECKER Pro | Multi-Task</title>
     <style>
-        :root { --primary: #1a73e8; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        :root { --neon: #00d4ff; --bg: #050a10; --green: #00ff88; }
+        body { background: var(--bg); color: #fff; font-family: sans-serif; text-align: center; padding: 15px; margin: 0; }
+        .card { max-width: 450px; margin: auto; background: #0a1929; border: 2px solid var(--neon); border-radius: 20px; padding: 20px; box-shadow: 0 0 20px rgba(0, 212, 255, 0.3); }
+        h1 { color: var(--neon); font-size: 1.6em; text-shadow: 0 0 10px var(--neon); }
+        input { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #1e293b; background: #000; color: #fff; box-sizing: border-box; text-align: center; font-size: 1.1em; }
         
-        /* الهيدر العلوي */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #161e2d; border-bottom: 1px solid #2d3748; }
-        .logo-area { display: flex; align-items: center; gap: 10px; }
-        .nav-btns { display: flex; gap: 10px; }
-        .nav-btn { padding: 8px 15px; border-radius: 8px; border: none; font-size: 0.9em; cursor: pointer; color: #fff; }
-        .btn-active { background: var(--primary); }
-        .btn-ghost { background: transparent; }
-
-        /* المحتوى الرئيسي */
-        .container { max-width: 500px; margin: 40px auto; padding: 20px; text-align: center; }
-        .main-icon { width: 80px; height: 80px; background: #1e293b; border-radius: 50%; display: flex; items-center; justify-content: center; margin: 0 auto 20px; border: 4px solid #1a73e822; }
-        h1 { font-size: 2.2em; margin-bottom: 10px; font-weight: bold; }
-        p.subtitle { color: #94a3b8; margin-bottom: 30px; font-size: 0.95em; }
-
-        /* صندوق الإدخال والأزرار */
-        .input-group { background: #334155; border-radius: 15px; display: flex; align-items: center; padding: 5px; margin-bottom: 25px; }
-        input { flex: 1; background: transparent; border: none; padding: 15px; color: #fff; text-align: right; font-size: 1em; outline: none; }
-        .btn-action { background: var(--primary); color: #fff; border: none; padding: 12px 25px; border-radius: 12px; font-weight: bold; cursor: pointer; }
-
-        /* الأقسام الإضافية */
-        .section-card { background: var(--card); border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 1px solid #334155; text-align: right; }
-        .section-label { color: var(--primary); font-size: 0.8em; font-weight: bold; margin-bottom: 15px; display: block; border-right: 3px solid var(--primary); padding-right: 10px; }
+        .section { background: rgba(0,0,0,0.4); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #1a2a3a; }
+        .section-title { font-size: 0.8em; color: var(--neon); display: block; margin-bottom: 10px; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; }
         
-        .btn-secondary { display: block; width: 100%; padding: 12px; border-radius: 10px; text-decoration: none; text-align: center; font-weight: bold; margin-bottom: 10px; }
-        .btn-vm { background: #10b981; color: #fff; }
-        .btn-rec { border: 1px dashed #ef4444; color: #ef4444; background: #450a0a22; }
+        .btn { display: block; width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 1em; box-sizing: border-box; transition: 0.3s; }
+        .btn-stats { background: var(--neon); color: #000; }
+        .btn-vm { background: var(--green); color: #000; }
+        .btn-rec { background: #ff4b2b; color: #fff; }
         
-        #result { font-weight: bold; padding: 10px; color: #38bdf8; }
+        #res { margin-top: 10px; font-weight: bold; color: var(--neon); }
+        .hint { font-size: 0.75em; color: #666; margin-top: 8px; line-height: 1.4; }
     </style>
 </head>
 <body>
+    <div class="card">
+        <h1>🛡️ App CHECKER Pro</h1>
+        <input type="text" id="target" placeholder="أدخل الرابط المراد فصصه...">
 
-    <div class="header">
-        <div class="nav-btns">
-            <button class="nav-btn btn-ghost">📊 الإحصائيات</button>
-            <button class="nav-btn btn-active">الرئيسية</button>
-        </div>
-        <div class="logo-area">
-            <span style="font-weight: bold;">App Checker PRO</span>
-            <img src="https://img.icons8.com/color/48/shield.png" width="30">
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="main-icon">
-            <img src="https://img.icons8.com/fluency/96/shield.png" width="50">
-        </div>
-        
-        <h1>فحص أمان الروابط</h1>
-        <p class="subtitle">تأكد من سلامة أي رابط قبل النقر عليه. نقوم بفحص الروابط ضد قواعد البيانات للبرمجيات الخبيثة.</p>
-
-        <div class="input-group">
-            <button class="btn-action" onclick="getStats()">ابدأ الفحص</button>
-            <input type="text" id="target" placeholder="أدخل الرابط المراد فصحه...">
+        <div class="section">
+            <span class="section-title">📊 تحليل البيانات (JSON)</span>
+            <button class="btn btn-stats" onclick="getStats()">بدء الفحص الرقمي</button>
+            <div id="res">في انتظار الأوامر...</div>
         </div>
 
-        <div id="result">في انتظار إدخال الرابط...</div>
-
-        <div class="section-card">
-            <span class="section-label">البيئة المعزولة (VM)</span>
-            <p style="font-size: 0.85em; color: #94a3b8;">فتح الرابط في نافذة معزولة لتجنب ملفات تعريف الارتباط الخبيثة.</p>
-            <a id="vmLink" href="#" target="_blank" class="btn-secondary btn-vm" onclick="prepareVM()">فتح المعاينة الآمنة 🚀</a>
+        <div class="section">
+            <span class="section-title">🖥️ البيئة المعزولة (VM)</span>
+            <a id="vmLink" href="#" target="_blank" class="btn btn-vm" onclick="prepareVM()">فتح في نافذة آمنة 🚀</a>
+            <p class="hint">سيتم فتح الموقع في نافذة جديدة لتجاوز حظر الحماية.</p>
         </div>
 
-        <div class="section-card">
-            <span class="section-label">توثيق الفحص</span>
-            <div class="btn-secondary btn-rec">
-                🔴 ابدأ "مسجل الشاشة" يدوياً لتوثيق الفحص
+        <div class="section">
+            <span class="section-title">🎥 توثيق الفيديو</span>
+            <div style="background: #000; padding: 10px; border-radius: 8px; border: 1px dashed #ff4b2b;">
+                <p style="color: #ff4b2b; font-size: 0.9em; margin: 0;">🔴 ميزة لـ J7:</p>
+                <p style="font-size: 0.8em; color: #ccc;">اضغط "فتح" أعلاه، ثم ابدأ "مسجل الشاشة" يدوياً من هاتفك لتصوير الفحص.</p>
             </div>
-            <p style="font-size: 0.75em; color: #64748b; margin-top: 10px;">بما أنك تستخدم J7، يرجى تفعيل مسجل الشاشة من لوحة التنبيهات قبل فتح المعاينة.</p>
         </div>
+
+        <p style="font-size: 0.6em; color: #334756;">نظام الفحص المتعدد v3.0</p>
     </div>
 
     <script>
         function getStats() {
             const url = document.getElementById('target').value.trim();
-            const res = document.getElementById('result');
-            if(!url) return alert("يرجى إدخال الرابط!");
+            const res = document.getElementById('res');
+            if(!url) return alert("أدخل رابطاً!");
             
-            res.innerHTML = "جاري التحليل الرقمي... ⏳";
+            res.innerHTML = "جاري طلب البيانات... ⏳";
             fetch('/api/check', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -105,15 +75,18 @@ HTML_TEMPLATE = '''
             })
             .then(r => r.json())
             .then(data => {
-                res.innerHTML = `⚠️ خبيث: ${data.malicious} | ✅ سليم: ${data.harmless}`;
+                res.innerHTML = `⚠️ خبيث: <span style="color:red">${data.malicious}</span> | ✅ سليم: <span style="color:var(--green)">${data.harmless}</span>`;
             })
-            .catch(() => { res.innerHTML = "فشل الاتصال بخادم الفحص."; });
+            .catch(() => { res.innerHTML = "خطأ في الاتصال بالسيرفر."; });
         }
 
         function prepareVM() {
             const urlInput = document.getElementById('target').value.trim();
             const link = document.getElementById('vmLink');
-            if(!urlInput) return alert("أدخل الرابط أولاً!");
+            if(!urlInput) {
+                alert("أدخل الرابط أولاً!");
+                return false;
+            }
             let finalUrl = urlInput.replace(/\s+/g, ''); 
             if(!finalUrl.startsWith('http')) finalUrl = 'https://' + finalUrl;
             link.href = finalUrl;
